@@ -167,11 +167,9 @@ void draw_score(int score, int x, int y, uint16_t color) {
 // --- LÓGICA DO JOGO ---
 // =================================================================================
 int check_collision(const Bird* bird, int bird_x_pos, const Obstacle* obs) {
-    // Colisão com topo ou fundo da tela
     if ((bird->y - BIRD_RADIUS) < 0 || (bird->y + BIRD_RADIUS) > VISIBLE_HEIGHT) {
         return 1;
     }
-    // Colisão com os obstáculos
     if (bird_x_pos + BIRD_RADIUS > obs->x && bird_x_pos - BIRD_RADIUS < obs->x + OBSTACLE_WIDTH) {
         if (bird->y - BIRD_RADIUS < obs->gap_y || bird->y + BIRD_RADIUS > obs->gap_y + GAP_HEIGHT) {
             return 1;
@@ -181,12 +179,10 @@ int check_collision(const Bird* bird, int bird_x_pos, const Obstacle* obs) {
 }
 
 void reset_game(Bird* p1, Bird* p2, Obstacle obstacles[], int* score) {
-    // Reseta Jogador 1
     p1->y = VISIBLE_HEIGHT / 2.0;
     p1->velocity_y = 0;
     p1->alive = 1;
 
-    // Reseta Jogador 2
     p2->y = VISIBLE_HEIGHT / 2.0;
     p2->velocity_y = 0;
     p2->alive = 1;
@@ -199,7 +195,7 @@ void reset_game(Bird* p1, Bird* p2, Obstacle obstacles[], int* score) {
         obstacles[i].scored = 0;
     }
     printf("Iniciando Jogo! P1 (Amarelo) usa KEY1, P2 (Azul) usa KEY2.\n");
-    fflush(stdout);
+    fflush(stdout); // Garante que a mensagem seja impressa antes de qualquer possível falha
 }
 
 int main() {
@@ -223,7 +219,7 @@ int main() {
 
         switch(state) {
             case GAME_RUNNING: {
-                // --- ENTRADA (INPUT) ---
+                // Pulo do Jogador 1 (KEY1)
                 if (player1.alive) {
                     int key1_pressed_now = (current_key_state & 0b0010);
                     int key1_pressed_before = (prev_key_state & 0b0010);
@@ -231,6 +227,7 @@ int main() {
                         player1.velocity_y = JUMP_VELOCITY;
                     }
                 }
+                // Pulo do Jogador 2 (KEY2)
                 if (player2.alive) {
                     int key2_pressed_now = (current_key_state & 0b0100);
                     int key2_pressed_before = (prev_key_state & 0b0100);
@@ -239,17 +236,18 @@ int main() {
                     }
                 }
 
-                // --- FÍSICA ---
+                // Física do Jogador 1
                 if(player1.alive) {
                     player1.velocity_y += GRAVITY;
                     player1.y += player1.velocity_y;
                 }
+                // Física do Jogador 2
                 if(player2.alive) {
                     player2.velocity_y += GRAVITY;
                     player2.y += player2.velocity_y;
                 }
 
-                // --- LÓGICA DOS OBSTÁCULOS ---
+                // Lógica dos obstáculos
                 for (int i = 0; i < 2; i++) {
                     obstacles[i].x -= OBSTACLE_SPEED;
                     if (!obstacles[i].scored && obstacles[i].x + OBSTACLE_WIDTH < P1_X_POS) {
@@ -264,7 +262,7 @@ int main() {
                     }
                 }
 
-                // --- COLISÕES ---
+                // Colisões
                 for (int i = 0; i < 2; i++) {
                     if (player1.alive && check_collision(&player1, P1_X_POS, &obstacles[i])) {
                         player1.alive = 0;
@@ -276,13 +274,12 @@ int main() {
                     }
                 }
                 
-                // --- VERIFICA FIM DE JOGO ---
                 if (!player1.alive && !player2.alive) {
                     state = GAME_OVER;
                     printf("FIM DE JOGO! Pontuacao Final: %d. Pressione KEY1 ou KEY2 para reiniciar.\n", score);
                 }
 
-                // --- DESENHAR TUDO ---
+                // Desenhar tudo
                 fill_screen(SKY_BLUE);
                 for (int i = 0; i < 2; i++) {
                     draw_filled_rect(obstacles[i].x, 0, obstacles[i].x + OBSTACLE_WIDTH, obstacles[i].gap_y, GREEN);
@@ -295,7 +292,6 @@ int main() {
             } 
 
             case GAME_OVER: {
-                // Checa se KEY1 ou KEY2 foram pressionados para reiniciar
                 int restart_key_pressed = (current_key_state & 0b0110) && !(prev_key_state & 0b0110);
                 if (restart_key_pressed) {
                     reset_game(&player1, &player2, obstacles, &score);
